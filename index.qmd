@@ -1,0 +1,50 @@
+
+---
+title: |
+  ![](img/ppg.png){width=60%} 
+  
+  Avaliação da diversidade genética em 15 acessos por meio de marcadores moleculares do tipo SSR (microssatélites) e RAPD
+author: "Adriana Gonela, Helio de souza Junior e Pedro Henrique Silvestre Duhatschek"
+date: "06-12-2025"
+lang: pt
+toc: true
+code-annotations: "hover"
+editor: 
+  markdown: 
+    wrap: 72
+editor_options: 
+  chunk_output_type: console
+---
+\pagebreak
+**Disciplina: DAG4497 – Biotecnologia Aplicada ao Melhoramento de
+Plantas, ministrada pela Profa. Dra. Adriana Gonela.**
+
+Elaborado por [Helio de Souza Junior](https://github.com/Helioszjr), com
+[RStudio](https://posit.co/download/rstudio-desktop) usando
+[Rmarkdown](https://rmarkdown.rstudio.com/index.html) e
+[Quarto](https://quarto.org/docs/guide/). Código disponível no
+[GitHub](https://github.com/Helioszjr).
+
+## Instalar pacotes
+
+```{r, echo=TRUE, eval=FALSE}
+options(repos = c(CRAN = "https://cran.r-project.org"))
+install.packages(c("readxl", "dplyr", "tidyverse","adegenet", 
+"vegan", "cluster", "factoextra", "ape"))
+```
+
+## Carregar pacotes
+
+```{r, message=FALSE}
+library(readxl)
+library(dplyr)
+library(tidyverse)
+library(adegenet)
+library(ape)
+library(vegan)        # Para distância de Jaccard
+library(cluster)      # Para clustering
+library(factoextra)   # Para visualização do dendrograma
+```
+
+## 1. Leitura dos dados RAPD
+
