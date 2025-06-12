@@ -1,0 +1,273 @@
+---
+title: |
+  Avaliação da diversidade genética em 15 acessos por meio de marcadores moleculares do tipo SSR (microssatélites) e RAPD
+author: "Adriana Gonela, Helio de souza Junior e Pedro Henrique Silvestre Duhatschek"
+date: "06-12-2025"
+lang: pt
+toc: true
+code-annotations: "hover"
+editor: 
+  markdown: 
+    wrap: 72
+editor_options: 
+  chunk_output_type: console
+---
+
+\pagebreak
+
+**Disciplina: DAG4497 – Biotecnologia Aplicada ao Melhoramento de
+Plantas, ministrada pela Profa. Dra. Adriana Gonela.**
+
+Elaborado por [Helio de Souza Junior](https://github.com/Helioszjr), com
+[RStudio](https://posit.co/download/rstudio-desktop) usando
+[Rmarkdown](https://rmarkdown.rstudio.com/index.html) e
+[Quarto](https://quarto.org/docs/guide/). Código disponível no
+[GitHub](https://github.com/Helioszjr).
+
+## Instalar pacotes
+
+```{r, echo=TRUE, eval=FALSE}
+options(repos = c(CRAN = "https://cran.r-project.org"))
+install.packages(c("readxl", "dplyr", "tidyverse","adegenet", 
+"vegan", "cluster", "factoextra", "pheatmap", "ade4", "RColorBrewer" "ape")) 
+```
+
+## Carregar pacotes
+
+```{r, message=FALSE}
+library(readxl)       # Ler arquivos do Excel (.xls, .xlsx)
+library(dplyr)        # Manipulação eficiente de dados (filtrar, selecionar, agrupar, etc)
+library(tidyverse)    # Conjunto de pacotes (inclui dplyr, ggplot2, readr, etc.)
+library(adegenet)     # Análise de dados genéticos (SNPs, microssatélites, AFLPs,RAPD etc.)
+library(ape)          # Análise de filogenias e evolução molecular
+library(vegan)        # Análise ecológica e estatística multivariada
+library(cluster)      # Métodos de agrupamento (clustering)
+library(factoextra)   # Para visualização de dendrograma, PCA, k-means, clustering hierárquico, etc
+library(pheatmap)     # Geração de heatmaps com dendrogramas
+library(RColorBrewer) # Geração de paletas de cores amigáveis para gráficos
+library(ade4)         # Estatística multivariada para ecologia e genética
+```
+
+## Marcadores RAPD 
+
+### 1. Leitura dos dados RAPD
+
+```{r, message=FALSE}
+RAPD <- read_excel("C:/Git/EstDocenciaUEM/AULA - PRATICA/RAPD.xlsx", sheet = "RAPD")
+```
+
+```{r}
+dados1 <- RAPD |> rename(individuo = 1)
+View(dados1) 
+```
+
+### 2. Separar identificadores e matriz binária
+
+```{r}
+matriz_binaria <- dados1 |> select(-individuo)
+nomes <- dados1$individuo
+```
+
+### 3. Calcular matriz de distância (Jaccard)
+
+### Fórmula da distância de Jaccard
+
+A distância de Jaccard, usada para dados binários (presença/ausência), é calculada por:
+
+$$
+D_{Jaccard} = 1 - \frac{a}{a + b + c}
+$$
+
+onde:
+
+- $a$ = número de atributos presentes em ambos os indivíduos (interseção),
+- $b$ = número de atributos presentes no indivíduo 1 e ausentes no indivíduo 2,
+- $c$ = número de atributos ausentes no indivíduo 1 e presentes no indivíduo 2.
+
+O valor varia de 0 (conjuntos idênticos) a 1 (sem elementos em comum).
+
+```{r}
+dist_jaccard <- vegdist(matriz_binaria, method = "jaccard")
+```
+
+```{r}
+# Conversão para matriz comum 
+matriz_dist <- as.matrix(dist_jaccard)
+```
+
+### 4. Agrupamento hierárquico (método UPGMA)
+
+```{r}
+cluster <- hclust(dist_jaccard, method = "average")
+```
+
+### 5. Dendrograma método UPGMA - RAPD
+
+```{r}
+# Mostra similaridade entre indivíduos.
+dist_mat <- dist(matriz_binaria)
+hc1 <- hclust(dist_mat, method = "ward.D2")
+plot(hc1,
+     main = "Dendrograma UPGMA - RAPD",
+     ylab = "Distancia",
+     xlab = "",
+     sub = "",
+     labels = rownames(matriz_binaria),
+     cex = 0.8)  # tamanho da fonte dos rótulos
+
+```
+
+```{r, message=FALSE, warning=FALSE}
+# Plotagem usando factoextra
+fviz_dend(hc1,
+          cex = 0.8,  # Tamanho da fonte
+          k = 4,      # Número de grupos (opcional)
+          k_colors = c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3"),  # Cores para os grupos
+          label_cols = "black",
+          rect = TRUE,
+          rect_fill = TRUE,
+          rect_border = "jco",  # Estilo de borda (padrão do factoextra)
+          main = "Dendrograma UPGMA - RAPD",
+          ylab = "Distancia")
+```
+
+### 6. Análise de Componentes Principais (PCA)
+
+```{r, message=FALSE, warning=FALSE}
+# Padronizar a matriz binária (opcional)
+pca <- prcomp(matriz_binaria, center = TRUE, scale. = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+# Plotagem usando factoextra
+# Plotar a PCA com nomes dos indivíduos
+fviz_pca_ind(pca,
+             label = "all", # ou "all" para mostrar nomes
+             habillage = cutree(cluster, k = 3), # colorir por grupo do dendrograma
+             addEllipses = TRUE,
+             title = "Análise de Componentes Principais (PCA) - RAPD")
+```
+
+### 7. Heatmap de Similaridade 
+
+```{r}
+similaridade <- 1 - as.matrix(dist_jaccard)
+pheatmap(similaridade, clustering_distance_rows = dist_jaccard,
+         clustering_distance_cols = dist_jaccard,
+         main = "Heatmap de Similaridade (Jaccard) - RAPD")
+```
+
+## Marcadores SSR
+
+### 1. Leitura dos dados SSR
+
+```{r, message=FALSE, warning=FALSE}
+SSR <- read_excel("C:/Git/EstDocenciaUEM/AULA - PRATICA/SSR.xlsx", sheet = "SSR")  # substitua pelo caminho correto se necessário
+```
+
+### 2. Formatar os dados SSR
+
+```{r}
+# Converter para formato genind (pacote adegenet/poppr)
+# Supondo que a primeira coluna é o nome da amostra
+dados_genind <- df2genind(SSR[,-1], ploidy=2, sep="/", ind.names=SSR[[1]])
+View(SSR)
+```
+
+### 3. Calcular matriz de distância (Nei)
+
+### Fórmula da distância de Nei
+
+A distância genética de Nei (1972) é dada por:
+
+$$
+D_{Nei} = -\ln I
+$$
+
+onde:
+
+$I$ é o índice de similaridade genética entre duas populações, calculado como:
+
+$$
+I = \frac{\sum_{i} p_{1i} p_{2i}}{\sqrt{\left(\sum_{i} p_{1i}^2\right) \left(\sum_{i} p_{2i}^2\right)}}
+$$
+
+- $p_{1i}$ e $p_{2i}$ são as frequências do alelo $i$ nas populações 1 e 2, respectivamente.
+- A distância varia de 0 (populações idênticas) a valores positivos maiores conforme a divergência genética aumenta.
+
+```{r}
+# Distância genética (ex: distância de Nei)
+dist_matrix <- dist(dados_genind, method = "euclidean") 
+```
+
+### 4. Dendrograma método UPGMA - SSR
+
+```{r}
+hc2 <- hclust(dist_matrix, method = "ward.D2")
+plot(hc2,
+     main = "Dendrograma UPGMA - SSR",
+     ylab = "Distancia",
+     xlab = "",
+     sub = "",
+     cex = 0.8)  # tamanho da fonte dos rótulos
+```
+
+```{r}
+# Plotagem usando factoextra
+fviz_dend(hc2,
+          cex = 0.8,               # Tamanho da fonte
+          k = 4,                   # Número de grupos (opcional)
+          k_colors = c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3"),  # Cores para os grupos
+          label_cols = "black",
+          rect = TRUE,             # Mostrar retângulos nos grupos
+          rect_fill = TRUE,
+          rect_border = "jco",     # Cor das bordas
+          main = "Dendrograma UPGMA - SSR",
+          ylab = "Similaridade")
+```
+
+### 5. Análise de Componentes Principais (PCA)
+
+```{r, message=FALSE, warning=FALSE}
+SSR_data <- as.data.frame(SSR[,-1])
+rownames(SSR_data) <- SSR[[1]]  # Define os nomes das linhas
+
+pca_result <- dudi.pca(SSR_data, scannf = FALSE, nf = 2)
+```
+
+```{r}
+# Criar grupos manualmente (baseado na imagem enviada)
+grupos <- factor(c(rep(1, 8), rep(2, 6), 3))
+```
+
+```{r, message=FALSE, warning=FALSE}
+fviz_pca_ind(pca_result,
+             geom.ind = "point",
+             col.ind = grupos,
+             shape.ind = grupos,
+             label = "all",  # Mostra os nomes dos indivíduos
+             repel = TRUE,   # Evita sobreposição dos nomes
+             addEllipses = TRUE,
+             ellipse.level = 0.95,
+             palette = c("#E74C3C", "#27AE60", "#3498DB"),
+             legend.title = "Groups") +
+  labs(title = "Análise de Componentes Principais (PCA) – SSR",
+       x = paste0("Dim1 (", round(100 * pca_result$eig[1], 1), "%)"),
+       y = paste0("Dim2 (", round(100 * pca_result$eig[2], 1), "%)")) +
+  theme_minimal()
+```
+
+## Informações necessárias
+
+Diferenças entre Distância de Nei e Distância de Jaccard
+
+
+| **Aspecto**             | **Distância de Nei**                      | **Distância de Jaccard**                                      |
+| ------------------- | ------------------------------------- | --------------------------------------------------------- |
+| Tipo de dado        | Frequência alélica (populações)       | Dados binários (indivíduos)                               |
+| Mede                | Similaridade genética por frequência  | Similaridade de presença/ausência                         |
+| Varia de            | 0 (igual) a 1 (diferente)             | 0 (igual) a 1 (sem interseção)                            |
+| Aplicação principal | Divergência genética entre populações | Diferença genética ou ecológica entre indivíduos/amostras |
+| Considera           | Frequência dos alelos                 | Só presença/ausência                                      |
+
+
