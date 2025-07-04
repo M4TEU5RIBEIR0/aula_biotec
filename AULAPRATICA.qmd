@@ -1,7 +1,7 @@
 ---
 title: |
-  Avaliação da diversidade genética em 15 acessos por meio de marcadores moleculares do tipo SSR (microssatélites) e RAPD
-author: "Adriana Gonela, Helio de souza Junior e Pedro Henrique Silvestre Duhatschek"
+  Avaliação da diversidade genética em genótipos de Maracujá-Amarelo (Passiflora edulis) com o uso de marcadores microssatélites e RAPD
+author: "Mateus Ribeiro dos Santos"
 date: "06-12-2025"
 lang: pt
 toc: true
@@ -52,9 +52,12 @@ library(ade4)         # Estatística multivariada para ecologia e genética
 
 ### 1. Leitura dos dados RAPD
 
-```{r, message=FALSE}
-RAPD <- read_excel("C:/Git/EstDocenciaUEM/AULA - PRATICA/RAPD.xlsx", sheet = "RAPD")
+```{r}
+library(readxl)
+RAPD <- read_excel("Biotec.xlsx")
+View(RAPD)
 ```
+
 
 ```{r}
 dados1 <- RAPD |> rename(individuo = 1)
@@ -162,7 +165,9 @@ pheatmap(similaridade, clustering_distance_rows = dist_jaccard,
 ### 1. Leitura dos dados SSR
 
 ```{r, message=FALSE, warning=FALSE}
-SSR <- read_excel("C:/Git/EstDocenciaUEM/AULA - PRATICA/SSR.xlsx", sheet = "SSR")  # substitua pelo caminho correto se necessário
+library(readxl)
+SSR <- read_excel("SSR.xlsx")
+View(SSR)  # substitua pelo caminho correto se necessário
 ```
 
 ### 2. Formatar os dados SSR
